@@ -36,7 +36,8 @@ No accounts, no servers, no analytics. Nothing leaves your browser.
 Applies a dark colour scheme to websites the user chooses, adjusted for time of day.
 
 **Permission justifications:**
-- Host permission (all sites, via content script): needed to apply the dark style to whichever sites the user turns it on for. Only the page's background colour is checked; content is never read or sent.
+- Host permission (optional, requested per site): the extension asks for access to a single site only when the user turns dark mode on for it, and drops it when they turn it off. It applies a CSS dark style there; only the page's background colour is checked, content is never read or sent.
+- scripting: registers the dark-mode script for exactly the sites the user granted, and starts it on the open tab right after they grant access.
 - storage: saves the user's settings and site list.
 - geolocation: optional; used once, when the user clicks "Use my location", to calculate sunrise and sunset times. Stored locally, never transmitted.
 - contextMenus: adds the "Dark mode on this site" right-click entry.

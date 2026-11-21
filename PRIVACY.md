@@ -1,6 +1,6 @@
 # Privacy policy: Forced Dark Mode
 
-_Last updated: 21 November 2026_
+_Last updated: 22 November 2026_
 
 Forced Dark Mode does not collect, send or sell any data. It has no servers, no analytics and no tracking.
 
@@ -12,9 +12,10 @@ Forced Dark Mode does not collect, send or sell any data. It has no servers, no 
 
 ## Permissions
 
-- **Read and change pages on all sites:** needed to apply the dark style to the sites you choose. Page content is never read, stored or sent. The extension only checks a page's background colour to tell whether the site is already dark.
+- **Access to a site (asked one site at a time):** Chrome asks you the first time you turn dark mode on for a site, and access is removed when you turn it off. It is needed to apply the dark style there. Page content is never read, stored or sent. The extension only checks a page's background colour to tell whether the site is already dark.
 - **Storage:** saves your settings, as described above.
 - **Geolocation:** used only when you click "Use my location".
+- **Scripting:** starts the dark style on the sites you allowed.
 - **Context menus:** adds the "Dark mode on this site" entry to the right-click menu.
 
 ## Contact

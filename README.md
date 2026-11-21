@@ -13,6 +13,7 @@ A Chrome extension that gives a dark mode to sites that don't have one. You turn
 - Optional **Bedtime** palette from a time you choose
 - "Only when my system is dark" option
 - A coloured dot on the toolbar icon shows the current palette
+- Asks for access one site at a time, only when you turn it on there
 - No servers, no tracking. See [PRIVACY.md](PRIVACY.md)
 
 ## Install from source

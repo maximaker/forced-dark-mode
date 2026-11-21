@@ -1,6 +1,10 @@
 // Runs at document_start in every frame. Applies the dark palette to enabled sites,
 // skips sites that are already dark, and flips CSS background images back.
 (() => {
+  // Can be both registered and injected into an open tab: only run once per frame.
+  if (window.__fdmLoaded) return;
+  window.__fdmLoaded = true;
+
   const STYLE_ID = "forced-dark-mode-style";
   const host = location.hostname;
   const isTop = window === window.top;

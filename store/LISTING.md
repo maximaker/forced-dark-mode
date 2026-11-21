@@ -45,6 +45,8 @@ Applies a dark colour scheme to websites the user chooses, adjusted for time of 
 
 **Data usage:** Does not collect or use any user data. (Location is processed on the device only and never transmitted. Under the store's definitions, that isn't collection.)
 
+**YouTube video (Store listing tab):** https://youtu.be/aJLtEyTI9t8 (unlisted)
+
 **Privacy policy URL:** https://github.com/maximaker/forced-dark-mode/blob/main/PRIVACY.md
 
 **Assets in this folder:** screenshot-1.png, screenshot-2.png (1280×800), promo-tile-440x280.png. Icon: icons/128.png.

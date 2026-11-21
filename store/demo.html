@@ -1,0 +1,230 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- Demo video scene. render(t) draws the frame for time t (seconds); record-demo.py captures frames. -->
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; }
+  body { font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; color: #ececef;
+         background: radial-gradient(900px 500px at 90% 120%, #3a2614 0%, transparent 60%), radial-gradient(800px 500px at 0% -10%, #1d2235 0%, transparent 60%), #101014; }
+
+  /* Browser window */
+  .win { position: absolute; left: 140px; top: 62px; width: 1000px; height: 572px; border-radius: 12px; overflow: hidden;
+         background: #202124; box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 0 1px #33343a; }
+  .tabs { height: 34px; display: flex; align-items: flex-end; padding-left: 74px; gap: 4px; position: relative; }
+  .tabs .dots { position: absolute; left: 14px; top: 12px; display: flex; gap: 7px; }
+  .tabs .dots i { width: 11px; height: 11px; border-radius: 50%; background: #4a4b52; }
+  .tab { height: 28px; width: 210px; background: #35363a; border-radius: 9px 9px 0 0; font-size: 12px; color: #e3e3e6; display: flex; align-items: center; padding: 0 12px; gap: 8px; }
+  .tab b { width: 14px; height: 14px; border-radius: 3px; background: #c2410c; }
+  .toolbar { height: 42px; background: #35363a; display: flex; align-items: center; padding: 0 12px; gap: 12px; }
+  .url { flex: 1; height: 30px; border-radius: 15px; background: #202124; color: #bdbdc3; font-size: 13px; display: flex; align-items: center; padding: 0 16px; }
+  .ext { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; position: relative; }
+  .ext img { width: 20px; height: 20px; border-radius: 4px; }
+  .badge { position: absolute; right: -1px; bottom: 0; width: 12px; height: 8px; border-radius: 4px; border: 1.5px solid #35363a; }
+  .ext.hover { background: #47484d; }
+
+  /* Page */
+  .page { position: absolute; top: 76px; left: 0; right: 0; bottom: 0; background: #fff; color: #1d1d1f; overflow: hidden; }
+  .page .nav { display: flex; justify-content: space-between; align-items: center; padding: 18px 56px; border-bottom: 1px solid #eee; font: 700 20px Georgia, serif; }
+  .page .nav span { font: 500 14px system-ui; color: #2a5bd7; }
+  .page .content { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; padding: 34px 56px; }
+  .kicker { font: 600 12px system-ui; color: #c2410c; text-transform: uppercase; letter-spacing: .08em; }
+  .page h2 { font: 700 34px/1.15 Georgia, serif; margin: 10px 0 16px; }
+  .page p { font: 15px/1.7 Georgia, serif; color: #444; margin: 0 0 12px; }
+  .btn { display: inline-block; margin-top: 6px; background: #2a5bd7; color: #fff; font: 600 13px system-ui; padding: 10px 18px; border-radius: 7px; }
+  .photo { height: 330px; border-radius: 12px; position: relative; overflow: hidden;
+           background: linear-gradient(170deg, #f7d08a 0%, #ee9a55 30%, #d9663b 52%, #7b4a8c 75%, #3b4f78 100%); }
+  .photo .sun { position: absolute; left: 58%; top: 34%; width: 70px; height: 70px; border-radius: 50%; background: #fff3c4; box-shadow: 0 0 60px 20px rgba(255,230,160,.6); }
+  .photo .hill1 { position: absolute; left: -10%; right: -10%; bottom: -40px; height: 150px; border-radius: 50% 50% 0 0; background: #2f4a37; }
+  .photo .hill2 { position: absolute; left: 30%; right: -30%; bottom: -60px; height: 170px; border-radius: 50% 50% 0 0; background: #24392b; }
+  .caption-small { font: 12px system-ui; color: #888; margin-top: 8px; }
+
+  /* Popup */
+  .popup { position: absolute; left: 820px; top: 112px; width: 300px; background: #141417; border-radius: 12px; padding: 16px;
+           box-shadow: 0 18px 50px rgba(0,0,0,.6), 0 0 0 1px #2c2c32; transform-origin: top right; font-size: 13px; }
+  .p-head { display: flex; align-items: center; gap: 12px; }
+  .p-head img { width: 32px; height: 32px; border-radius: 8px; }
+  .p-head .eb { font-size: 11px; color: #8d8d96; }
+  .p-head .h { font-size: 15px; font-weight: 600; }
+  .sw { margin-left: auto; width: 44px; height: 26px; border-radius: 13px; background: #3a3a41; position: relative; }
+  .sw i { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+  .p-status { margin-top: 14px; display: flex; gap: 12px; align-items: center; background: #1d1d21; border: 1px solid #2c2c32; border-radius: 12px; padding: 12px; }
+  .p-status .swt { width: 26px; height: 26px; border-radius: 50%; background: #2f2f35; }
+  .p-status .t { font-weight: 600; }
+  .p-status .s { font-size: 12px; color: #8d8d96; }
+  .p-seg { margin-top: 14px; display: grid; grid-template-columns: repeat(4,1fr); background: #1d1d21; border: 1px solid #2c2c32; border-radius: 10px; padding: 3px; font-size: 12px; color: #8d8d96; text-align: center; }
+  .p-seg span { padding: 7px 0; border-radius: 7px; }
+  .p-seg span.on { background: #26262b; color: #ececef; }
+
+  /* Overlays */
+  .clock { position: absolute; left: 140px; top: 18px; display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 600; letter-spacing: .01em; }
+  .clock .orb { width: 14px; height: 14px; border-radius: 50%; }
+  .clock small { font-weight: 400; color: #9a9aa3; font-size: 14px; }
+  .cap { position: absolute; left: 0; right: 0; top: 652px; text-align: center; font-size: 26px; font-weight: 600; letter-spacing: -.01em; }
+  .cap em { font-style: normal; color: #f0aa5a; }
+  .key { display: inline-block; font: 600 18px system-ui; padding: 3px 11px; border-radius: 7px; background: #2a2a30; border: 1px solid #3c3c44; border-bottom-width: 3px; margin: 0 3px; vertical-align: 3px; }
+  .cursor { position: absolute; width: 22px; height: 30px; left: 0; top: 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
+  .ripple { position: absolute; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; border: 3px solid #f0aa5a; }
+
+  .card { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+          background: radial-gradient(900px 500px at 90% 120%, #3a2614 0%, transparent 60%), radial-gradient(800px 500px at 0% -10%, #1d2235 0%, transparent 60%), #101014; }
+  .card img { width: 96px; height: 96px; border-radius: 22px; margin-bottom: 26px; }
+  .card h1 { margin: 0; font-size: 58px; letter-spacing: -.02em; }
+  .card p { margin: 12px 0 0; font-size: 24px; color: #a5a5ae; }
+  .card p em { font-style: normal; color: #f0aa5a; }
+  .card .url2 { margin-top: 34px; font-size: 17px; color: #8d8d96; }
+</style>
+</head>
+<body>
+  <div class="clock" id="clock"><span class="orb" id="orb"></span><span id="clockT">4:10 PM</span><small id="clockS">Thursday</small></div>
+
+  <div class="win">
+    <div class="tabs"><div class="dots"><i></i><i></i><i></i></div><div class="tab"><b></b>The Daily Read</div></div>
+    <div class="toolbar">
+      <div class="url">thedailyread.example/travel/slow-weekend</div>
+      <div class="ext" id="ext"><img src="../icons/48.png" alt=""><span class="badge" id="badge"></span></div>
+    </div>
+    <div class="page" id="page">
+      <div class="nav">The Daily Read <span>Subscribe</span></div>
+      <div class="content">
+        <div>
+          <div class="kicker">Travel</div>
+          <h2>A slow weekend in the hills, one village at a time</h2>
+          <p>We left the city on Friday with no plan beyond the first guesthouse. By Sunday the map was full of pencil marks and the notebook full of recipes.</p>
+          <p>The best meal was in a kitchen with four tables and no menu. You eat what the garden gave that morning, and you stay until the light goes.</p>
+          <span class="btn">Keep reading</span>
+        </div>
+        <div>
+          <div class="photo" id="photo"><div class="sun"></div><div class="hill1"></div><div class="hill2"></div></div>
+          <div class="caption-small">Sunset over the valley, Saturday evening.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="popup" id="popup">
+    <div class="p-head"><img src="../icons/48.png" alt=""><div><div class="eb">Forced Dark Mode</div><div class="h">thedailyread.example</div></div>
+      <div class="sw" id="sw"><i id="knob"></i></div></div>
+    <div class="p-status"><span class="swt" id="pswt"></span><div><div class="t" id="pt">Off on this site</div><div class="s" id="ps">Turn it on with the switch</div></div></div>
+    <div class="p-seg"><span class="on">Auto</span><span>Day</span><span>Evening</span><span>Bedtime</span></div>
+  </div>
+
+  <div class="cap" id="cap"></div>
+
+  <svg class="cursor" id="cursor" viewBox="0 0 22 30"><path d="M2 2 L2 24 L8 18.5 L12 28 L16 26.3 L12 17 L20 17 Z" fill="#fff" stroke="#111" stroke-width="1.6" stroke-linejoin="round"/></svg>
+  <div class="ripple" id="ripple"></div>
+
+  <div class="card" id="intro"><img src="../icons/128.png" alt=""><h1>Forced Dark Mode</h1><p>Dark mode for sites that <em>don't have one.</em></p></div>
+  <div class="card" id="outro"><img src="../icons/128.png" alt=""><h1>Forced Dark Mode</h1><p>Neutral by day. <em>Warmer after sunset.</em></p><div class="url2">Free · No tracking · github.com/maximaker/forced-dark-mode</div></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const clamp = (x) => Math.max(0, Math.min(1, x));
+const ease = (x) => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const prog = (t, a, b) => ease((t - a) / (b - a));
+const mix = (a, b, k) => a + (b - a) * k;
+const mixP = (a, b, k) => ({ i: mix(a.i, b.i, k), h: mix(a.h, b.h, k), s: mix(a.s, b.s, k), b: mix(a.b, b.b, k), c: mix(a.c, b.c, k) });
+
+// Same values as sun.js; "light" = extension off.
+const P = {
+  light:   { i: 0,    h: 0,   s: 0,    b: 1,    c: 1 },
+  day:     { i: 0.89, h: 180, s: 0,    b: 1,    c: 0.95 },
+  evening: { i: 0.90, h: 180, s: 0.30, b: 0.85, c: 0.88 },
+  bedtime: { i: 0.92, h: 180, s: 0.55, b: 0.70, c: 0.85 },
+};
+const BADGE = { day: "#dfe5f2", evening: "#f0aa5a", bedtime: "#c4622d" };
+
+// Cursor path: [time, x, y]
+const PATH = [[0, 760, 520], [2.9, 760, 520], [4.0, 1094, 100], [4.6, 1094, 100], [5.5, 1100, 151], [6.6, 1100, 151], [7.6, 900, 460], [10, 940, 480], [27, 940, 480]];
+const CLICKS = [4.25, 5.85];
+
+function cursorAt(t) {
+  for (let k = 0; k < PATH.length - 1; k++) {
+    const [t0, x0, y0] = PATH[k], [t1, x1, y1] = PATH[k + 1];
+    if (t <= t1) { const e = ease((t - t0) / (t1 - t0)); return [mix(x0, x1, e), mix(y0, y1, e)]; }
+  }
+  return PATH[PATH.length - 1].slice(1);
+}
+
+function fmtTime(min) {
+  min = ((Math.round(min) % 1440) + 1440) % 1440;
+  const h = Math.floor(min / 60), m = min % 60;
+  return `${(h % 12) || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+}
+
+const CAPS = [
+  [3.0, 7.4, "One switch per site"],
+  [7.7, 10.4, "Photos keep their <em>real colours</em>"],
+  [10.7, 15.6, "Fades <em>warmer and dimmer</em> after sunset"],
+  [15.9, 20.6, "Optional <em>bedtime</em> mode for late reading"],
+  [20.9, 24.0, 'Or press <span class="key">Alt</span>+<span class="key">Shift</span>+<span class="key">D</span>'],
+];
+
+function render(t) {
+  // Palette over time
+  let p = P.light, label = null;
+  const on = t >= 5.9 ? 1 : 0; // the real extension switches instantly
+  if (t >= 5.9) { p = mixP(P.light, P.day, on); label = "day"; }
+  const ev = prog(t, 11.6, 14.4);
+  if (t >= 11.6) { p = mixP(P.day, P.evening, ev); if (ev > .5) label = "evening"; }
+  const bed = prog(t, 17.0, 19.4);
+  if (t >= 17.0) { p = mixP(P.evening, P.bedtime, bed); if (bed > .5) label = "bedtime"; }
+  // Keyboard toggle: off at 22.2, back on at 23.2
+  const offK = t >= 22.2 ? 1 : 0, onK = t >= 23.2 ? 1 : 0;
+  if (t >= 22.2) { const k = t < 23.2 ? 1 - offK : onK; p = mixP(P.light, P.bedtime, k); label = k > .5 ? "bedtime" : null; }
+
+  const k = p.i > 0 ? p.i / 0.9 : 0; // how "on" the inversion is, for flipping the photo back
+  $("page").style.filter = `invert(${p.i}) hue-rotate(${p.h}deg) sepia(${p.s}) brightness(${p.b}) contrast(${p.c})`;
+  $("photo").style.filter = `invert(${Math.min(1, k)}) hue-rotate(${180 * Math.min(1, k)}deg)`;
+  $("badge").style.background = label ? BADGE[label] : "transparent";
+  $("badge").style.borderColor = label ? "#35363a" : "transparent";
+
+  // Clock
+  let minutes, phase;
+  if (t < 10.7) minutes = 16 * 60 + 10 + (t / 10.7) * 6;
+  else if (t < 15.6) minutes = 16 * 60 + 16 + prog(t, 10.9, 15.0) * 54;
+  else minutes = 22 * 60 + 50 + prog(t, 16.0, 20.0) * 30;
+  phase = minutes >= 22 * 60 + 60 - 0.5 || minutes < 300 ? "bedtime" : minutes >= 16 * 60 + 29 ? "evening" : "day";
+  if (minutes >= 23 * 60) phase = "bedtime";
+  $("clockT").textContent = fmtTime(minutes);
+  $("clockS").textContent = minutes < 16 * 60 + 29 ? "sunset at 4:29 PM" : minutes < 23 * 60 ? "after sunset" : "bedtime";
+  $("orb").style.background = BADGE[phase];
+
+  // Popup: opens on first click, closes at 7.0
+  const open = prog(t, 4.25, 4.55) * (1 - prog(t, 7.0, 7.3));
+  $("popup").style.opacity = open;
+  $("popup").style.transform = `scale(${0.94 + 0.06 * open})`;
+  const sw = prog(t, 5.85, 6.05);
+  $("sw").style.background = sw > .5 ? "#e9a85a" : "#3a3a41";
+  $("knob").style.transform = `translateX(${18 * sw}px)`;
+  $("pswt").style.background = sw > .5 ? BADGE.day : "#2f2f35";
+  $("pt").textContent = sw > .5 ? "Day" : "Off on this site";
+  $("ps").textContent = sw > .5 ? "Neutral dark grey · Evening from 4:29 PM" : "Turn it on with the switch";
+  $("ext").classList.toggle("hover", t > 3.9 && t < 4.9);
+
+  // Cursor + click ripples
+  const [cx, cy] = cursorAt(t);
+  $("cursor").style.transform = `translate(${cx - 2}px, ${cy - 2}px)`;
+  $("cursor").style.opacity = 1 - prog(t, 9.8, 10.4);
+  let rip = 0, rx = 0, ry = 0;
+  for (const c of CLICKS) if (t >= c && t < c + 0.45) { rip = (t - c) / 0.45; [rx, ry] = cursorAt(c); }
+  $("ripple").style.opacity = rip ? 1 - rip : 0;
+  $("ripple").style.transform = `translate(${rx}px, ${ry}px) scale(${0.4 + rip})`;
+
+  // Captions
+  let html = "", op = 0;
+  for (const [a, b, text] of CAPS) if (t >= a && t <= b) { html = text; op = Math.min(prog(t, a, a + 0.35), 1 - prog(t, b - 0.35, b)); }
+  $("cap").innerHTML = html;
+  $("cap").style.opacity = op;
+  $("cap").style.transform = `translateY(${(1 - op) * 8}px)`;
+
+  // Title cards
+  $("intro").style.opacity = 1 - prog(t, 2.2, 2.9);
+  $("outro").style.opacity = prog(t, 24.3, 25.1);
+}
+window.DURATION = 28;
+render(Number(new URLSearchParams(location.search).get("t") || 0));
+</script>
+</body>
+</html>

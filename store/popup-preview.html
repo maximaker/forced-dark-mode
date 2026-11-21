@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<head><base href="../">
+<meta charset="utf-8">
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<main>
+  <header class="head">
+    <img src="icons/48.png" alt="" class="logo" width="32" height="32">
+    <div class="site">
+      <div class="eyebrow">Forced Dark Mode</div>
+      <div class="host" id="host">—</div>
+    </div>
+    <input type="checkbox" class="switch big" id="toggle" aria-label="Dark mode on this site">
+  </header>
+
+  <section class="status" id="status">
+    <span class="swatch" id="swatch"></span>
+    <div class="status-text">
+      <div class="status-title" id="statusTitle">Off on this site</div>
+      <div class="status-sub" id="statusSub">Turn it on with the switch, Alt+Shift+D, or right-click.</div>
+    </div>
+  </section>
+  <label class="row force" id="forceRow" hidden>
+    <span>Apply even though it looks dark</span>
+    <input type="checkbox" class="switch" id="force">
+  </label>
+
+  <section class="group">
+    <div class="label">Palette</div>
+    <div class="seg" id="mode" role="radiogroup">
+      <button data-mode="auto" role="radio"><span class="dot auto"></span>Auto</button>
+      <button data-mode="day" role="radio"><span class="dot day"></span>Day</button>
+      <button data-mode="evening" role="radio"><span class="dot evening"></span>Evening</button>
+      <button data-mode="bedtime" role="radio"><span class="dot bedtime"></span>Bedtime</button>
+    </div>
+    <div class="hint" id="schedule"></div>
+  </section>
+
+  <section class="group card">
+    <label class="row">
+      <span>Bedtime from <input type="time" id="bedTime"></span>
+      <input type="checkbox" class="switch" id="bedOn">
+    </label>
+    <label class="row">
+      <span>Only when my system is dark</span>
+      <input type="checkbox" class="switch" id="followSystem">
+    </label>
+    <div class="row">
+      <span class="muted" id="locText">Sunset times: defaults</span>
+      <button class="link" id="locate">Use my location</button>
+    </div>
+  </section>
+
+  <details class="sites" id="sitesBox">
+    <summary><span id="sitesCount">Sites</span><span class="chev">›</span></summary>
+    <ul id="list"></ul>
+  </details>
+</main>
+<script src="store/stub.js"></script><script src="sun.js"></script>
+<script src="popup.js"></script>
+</body>
+</html>

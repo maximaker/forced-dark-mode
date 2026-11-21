@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; background: #0f0f12; color: #ececef; }
+  .canvas { width: 1280px; height: 800px; position: relative; overflow: hidden; display: none;
+            background: radial-gradient(1200px 600px at 85% 110%, #3a2614 0%, transparent 60%), radial-gradient(900px 500px at 0% 0%, #1d2235 0%, transparent 60%), #111116; }
+  .canvas.show { display: block; }
+  .tile { width: 440px; height: 280px; }
+  h1 { font-size: 54px; line-height: 1.05; margin: 0; font-weight: 700; letter-spacing: -0.02em; }
+  h1 em { font-style: normal; color: #f0aa5a; }
+  p.lead { font-size: 21px; line-height: 1.5; color: #a5a5ae; margin: 20px 0 0; max-width: 470px; }
+  ul.points { list-style: none; padding: 0; margin: 34px 0 0; display: grid; gap: 14px; font-size: 18px; color: #d5d5da; }
+  ul.points li { display: flex; gap: 12px; align-items: center; }
+  ul.points i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+  /* Mock website */
+  .site { width: 360px; height: 470px; border-radius: 14px; overflow: hidden; background: #fff; color: #1d1d1f;
+          box-shadow: 0 30px 60px rgba(0,0,0,.45); font-family: Georgia, serif; }
+  .site .bar { height: 30px; background: #f1f1f3; display: flex; align-items: center; gap: 6px; padding: 0 12px; border-bottom: 1px solid #ddd; }
+  .site .bar span { width: 9px; height: 9px; border-radius: 50%; background: #ccc; }
+  .site .bar b { flex: 1; height: 16px; margin-left: 10px; background: #fff; border-radius: 8px; border: 1px solid #e1e1e1; }
+  .site .nav { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid #eee; font: 600 15px system-ui; }
+  .site .nav span { color: #2a5bd7; font-weight: 500; font-size: 13px; }
+  .site .body { padding: 18px; }
+  .site .kicker { font: 600 11px system-ui; color: #c2410c; text-transform: uppercase; letter-spacing: .08em; }
+  .site h2 { font-size: 22px; line-height: 1.2; margin: 6px 0 12px; }
+  .site .photo { height: 120px; border-radius: 8px; background: linear-gradient(160deg, #f5c27a, #d96a3b 45%, #5b3a7a); position: relative; overflow: hidden; }
+  .site .photo::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 45px; background: linear-gradient(transparent, #2c3e2f); }
+  .site p { font-size: 13px; line-height: 1.6; color: #444; margin: 12px 0 0; }
+  .site .btn { display: inline-block; margin-top: 14px; background: #2a5bd7; color: #fff; font: 600 12px system-ui; padding: 8px 14px; border-radius: 6px; }
+  .site img.x { display: none; }
+
+  /* Same filters as the extension; photo is flipped back like real media */
+  .f-day     { filter: invert(.89) hue-rotate(180deg) contrast(.95); }
+  .f-evening { filter: invert(.9) hue-rotate(180deg) sepia(.3) brightness(.85) contrast(.88); }
+  .f-bedtime { filter: invert(.92) hue-rotate(180deg) sepia(.55) brightness(.7) contrast(.85); }
+  .f-day .photo, .f-evening .photo, .f-bedtime .photo { filter: invert(1) hue-rotate(180deg); }
+
+  .label { font: 600 15px system-ui; color: #a5a5ae; margin-top: 16px; text-align: center; }
+  .label b { color: #ececef; display: block; font-size: 18px; margin-bottom: 2px; }
+  iframe { border: 0; border-radius: 14px; box-shadow: 0 30px 70px rgba(0,0,0,.55), 0 0 0 1px #2c2c32; background: #141417; }
+</style>
+</head>
+<body>
+
+<!-- 1: Hero with popup -->
+<section class="canvas" id="s1">
+  <div style="position:absolute; left:90px; top:120px; width:540px">
+    <img src="../icons/128.png" width="64" height="64" style="border-radius:14px; margin-bottom:28px" alt="">
+    <h1>Dark mode for sites<br>that <em>don't have one.</em></h1>
+    <p class="lead">Turn it on per site. It follows the sun: neutral by day, warmer and dimmer after sunset.</p>
+    <ul class="points">
+      <li><i style="background:#dfe5f2"></i>One switch per site, or Alt+Shift+D</li>
+      <li><i style="background:#f0aa5a"></i>Fades to a warm evening palette at sunset</li>
+      <li><i style="background:#c4622d"></i>Optional bedtime mode for late reading</li>
+    </ul>
+  </div>
+  <iframe src="popup-preview.html?now=2026-11-21T19:00:00&bed=1" width="320" height="470" style="position:absolute; right:150px; top:165px; transform:scale(1.18); transform-origin: top right"></iframe>
+</section>
+
+<!-- 2: Day / Evening / Bedtime comparison -->
+<section class="canvas" id="s2">
+  <h1 style="position:absolute; left:0; right:0; top:52px; text-align:center; font-size:40px">Easy on the eyes, <em>day and night</em></h1>
+  <div style="position:absolute; left:0; right:0; top:140px; display:flex; justify-content:center; gap:38px">
+    <div><div style="border-radius:14px; box-shadow:0 30px 60px rgba(0,0,0,.5)"><div class="site f-day" id="m1" style="box-shadow:none"></div></div><div class="label"><b>Day</b>Neutral dark grey</div></div>
+    <div><div style="border-radius:14px; box-shadow:0 30px 60px rgba(0,0,0,.5)"><div class="site f-evening" id="m2" style="box-shadow:none"></div></div><div class="label"><b>Evening</b>Fades in after sunset</div></div>
+    <div><div style="border-radius:14px; box-shadow:0 30px 60px rgba(0,0,0,.5)"><div class="site f-bedtime" id="m3" style="box-shadow:none"></div></div><div class="label"><b>Bedtime</b>Warmest, for late reading</div></div>
+  </div>
+</section>
+
+<!-- Promo tile 440x280 -->
+<section class="canvas tile" id="tile">
+  <div style="position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; padding:0 38px">
+    <img src="../icons/128.png" width="56" height="56" style="border-radius:12px; margin-bottom:18px" alt="">
+    <div style="font-size:30px; font-weight:700; letter-spacing:-.01em">Forced Dark Mode</div>
+    <div style="font-size:16px; color:#a5a5ae; margin-top:6px">Dark mode for any site. Warmer after sunset.</div>
+  </div>
+</section>
+
+<template id="mock">
+  <div class="bar"><span></span><span></span><span></span><b></b></div>
+  <div class="nav">The Daily Read <span>Subscribe</span></div>
+  <div class="body">
+    <div class="kicker">Travel</div>
+    <h2>A slow weekend in the hills, one village at a time</h2>
+    <div class="photo"></div>
+    <p>We left the city on Friday with no plan beyond the first guesthouse. By Sunday the map was full of pencil marks and the notebook full of recipes.</p>
+    <span class="btn">Read more</span>
+  </div>
+</template>
+<script>
+  for (const id of ["m1", "m2", "m3"]) document.getElementById(id).append(document.getElementById("mock").content.cloneNode(true));
+  const which = new URLSearchParams(location.search).get("s") || "s1";
+  document.getElementById(which).classList.add("show");
+</script>
+</body>
+</html>

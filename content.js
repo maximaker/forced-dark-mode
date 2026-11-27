@@ -18,11 +18,10 @@
   const SETTINGS = { sites: {}, mode: "auto", bedtimeOn: false, bedtime: "23:00", followSystem: false };
 
   // ---- Styles ----
-  const css = (filter, smooth) => `
+  const css = (filter) => `
     html {
       filter: ${filter} !important;
       background-color: #fff !important;
-      ${smooth ? "transition: filter 2s linear !important;" : ""}
     }
     /* Flip media back so photos and videos look normal */
     img, video, picture, canvas, iframe, svg image,
@@ -47,8 +46,9 @@
   }
 
   function activate(filter) {
-    // No transition the first time, so the page doesn't fade in from light.
-    setStyle(css(filter, applied));
+    // No CSS transition: the dark-site check briefly switches the style off, and a transition
+    // would make every page fade in from light. Sunset fades already step once a minute.
+    setStyle(css(filter));
     applied = true;
     startBgScan();
   }

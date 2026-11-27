@@ -8,7 +8,7 @@ A Chrome extension that gives a dark mode to sites that don't have one. You turn
 
 - Per-site switch in the popup, **Alt+Shift+D**, or the right-click menu
 - Photos, videos and background images keep their normal colours
-- Sites that are already dark are detected and skipped (you can force it anyway)
+- Sites that are already dark are detected (the popup also checks what is on screen) and skipped; you can force it anyway
 - **Auto** palette: Day → Evening fades in over 40 min after sunset and back after sunrise
 - Optional **Bedtime** palette from a time you choose
 - "Only when my system is dark" option

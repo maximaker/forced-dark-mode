@@ -124,14 +124,15 @@
   function update() {
     clearTimeout(timer);
     chrome.storage.sync.get(SETTINGS, (s) => {
-      chrome.storage.local.get({ location: null, darkHosts: {} }, (l) => {
+      chrome.storage.local.get({ location: null, darkHosts: {}, seenDark: {} }, (l) => {
         const v = s.sites[host];
         if (!v || (s.followSystem && !systemDark.matches)) {
           deactivate();
           report("off");
           return;
         }
-        const isDark = detected !== null ? detected : !!l.darkHosts[host];
+        // seenDark comes from the popup's screenshot, so it wins over the page-colour guess.
+        const isDark = !!l.seenDark[host] || (detected !== null ? detected : !!l.darkHosts[host]);
         if (v !== "force" && isDark) {
           deactivate();
           report("skipped");
@@ -212,5 +213,5 @@
   systemDark.addEventListener("change", update);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) update(); });
   document.addEventListener("DOMContentLoaded", () => { detect(); if (applied) queue(document.body, true); });
-  window.addEventListener("load", () => { detect(); setTimeout(detect, 1500); });
+  window.addEventListener("load", () => { detect(); setTimeout(detect, 1500); setTimeout(detect, 4000); });
 })();

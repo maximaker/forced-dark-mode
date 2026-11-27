@@ -5,6 +5,43 @@ const DESCR = { day: "Neutral dark grey", evening: "Warmer and dimmer", bedtime:
 const originFor = (h) => `*://${h}/*`;
 let host = null;
 let tabId = null;
+let looksDark = false; // from a screenshot of the tab, taken when the popup opens
+
+// Average brightness of what's on screen (0 = black, 1 = white), or null if Chrome won't share it.
+async function screenBrightness() {
+  try {
+    const url = await chrome.tabs.captureVisibleTab({ format: "jpeg", quality: 40 });
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const c = new OffscreenCanvas(64, 40);
+    const g = c.getContext("2d");
+    g.drawImage(img, 0, 0, 64, 40);
+    const d = g.getImageData(0, 0, 64, 40).data;
+    let sum = 0;
+    for (let i = 0; i < d.length; i += 4) sum += 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
+    return sum / (d.length / 4) / 255;
+  } catch { return null; }
+}
+
+// Look at the page itself. Off: a dark screen means the site is already dark.
+// On and applied: a light screen means we inverted a dark site. Either way, remember it.
+async function checkScreen() {
+  const s = await chrome.storage.sync.get(SETTINGS);
+  const v = s.sites[host];
+  const state = (await chrome.storage.session.get("tab" + tabId))["tab" + tabId];
+  const granted = await grantedHosts();
+  const applied = v && granted.has(host) && ["day", "evening", "bedtime"].includes(state);
+  if (v === "force" || (v && !applied)) return;
+  const b = await screenBrightness();
+  if (b === null) return;
+  const dark = applied ? b > 0.6 : b < 0.25;
+  const { seenDark = {} } = await chrome.storage.local.get("seenDark");
+  if (dark === !!seenDark[host]) { looksDark = dark; return render(); }
+  looksDark = dark;
+  if (dark) seenDark[host] = true; else delete seenDark[host];
+  await chrome.storage.local.set({ seenDark });
+}
 
 const fmt = (d) => d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 const timeFromHM = (hm) => { const [h, m] = hm.split(":").map(Number); const d = new Date(); d.setHours(h, m, 0, 0); return d; };
@@ -47,6 +84,9 @@ async function render() {
   const set = (title, sub) => { $("statusTitle").textContent = title; $("statusSub").textContent = sub; };
   if (!host) {
     set("Not available here", "Chrome doesn't let extensions change this page.");
+  } else if (!v && looksDark) {
+    sw.classList.add("skipped");
+    set("Already dark", "This site has its own dark look. You probably don't need dark mode here.");
   } else if (!v) {
     set("Off on this site", "Turn it on with the switch, Alt+Shift+D, or right-click.");
   } else if (needsAccess) {
@@ -136,6 +176,7 @@ async function removeSite(name) {
   $("toggle").disabled = !host;
   await render();
   requestAnimationFrame(() => document.body.classList.add("ready"));
+  if (host) checkScreen();
 })();
 
 $("toggle").addEventListener("change", async (e) => {

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Forced Dark Mode",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Turn on a dark mode for any site that doesn't have one. Warmer at night, switches at sunset.",
   "permissions": ["storage", "activeTab", "geolocation", "contextMenus", "scripting"],
   "optional_host_permissions": ["*://*/*"],

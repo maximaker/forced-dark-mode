@@ -32,6 +32,13 @@
     [style*="background-image"] img, [data-fdm-bg] img, [data-fdm-bg] video, picture img {
       filter: none !important;
     }
+    /* Dark ink on a transparent background (logos, icons, diagrams): leave it inverted so it stays visible */
+    html img[data-fdm-ink] {
+      filter: none !important;
+    }
+    html [data-fdm-bg] img[data-fdm-ink], html picture img[data-fdm-ink] {
+      filter: invert(1) hue-rotate(180deg) !important;
+    }
   `;
 
   function setStyle(text) {
@@ -152,7 +159,72 @@
   let pending = new Set();
   let flushQueued = false;
 
+  // ---- Transparent images with dark ink ----
+  // Only these formats can be transparent. JPEGs and videos never need this.
+  const MAYBE_CLEAR = /\.(png|gif|webp|svg)(\?|#|$)|^data:image\/(png|gif|webp|svg)/i;
+  const verdicts = new WeakMap(); // img -> true (dark ink) / false
+  let flips = new Set();
+
+  // Pixel check on a small canvas. null if the browser won't let us read it (other server).
+  function inkFromPixels(img) {
+    const w = Math.min(48, img.naturalWidth), h = Math.min(48, img.naturalHeight);
+    if (!w || !h) return null;
+    try {
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      const g = c.getContext("2d", { willReadFrequently: true });
+      g.drawImage(img, 0, 0, w, h);
+      const d = g.getImageData(0, 0, w, h).data;
+      let clear = 0, seen = 0, lum = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 26) { clear++; continue; }
+        seen++;
+        lum += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+      }
+      const n = d.length / 4;
+      return clear / n >= 0.25 && seen > 0 && lum / seen < 0.35;
+    } catch { return null; }
+  }
+
+  // Fallback guess: a small logo or icon in a transparent format.
+  function inkGuess(img) {
+    if (img.naturalWidth > 480 || img.naturalHeight > 240) return false;
+    const hint = /logo|icon|brand/i;
+    return hint.test(img.currentSrc || img.src) || hint.test(img.alt || "") ||
+      !!img.closest('header, nav, [class*="logo" i], [id*="logo" i], [class*="icon" i]');
+  }
+
+  function applyInk(img) {
+    const src = img.currentSrc || img.src;
+    const auto = verdicts.get(img) === true;
+    const on = flips.has(src) ? !auto : auto;
+    if (on) img.setAttribute("data-fdm-ink", ""); else img.removeAttribute("data-fdm-ink");
+  }
+
+  function checkImg(img) {
+    const src = img.currentSrc || img.src;
+    if (!src) return;
+    if (!MAYBE_CLEAR.test(src) && !flips.has(src)) { verdicts.set(img, false); return applyInk(img); }
+    if (!img.complete || !img.naturalWidth) {
+      img.addEventListener("load", () => { verdicts.delete(img); checkImg(img); }, { once: true });
+      return;
+    }
+    if (!verdicts.has(img)) {
+      const px = MAYBE_CLEAR.test(src) ? inkFromPixels(img) : false;
+      verdicts.set(img, px === null ? inkGuess(img) : px);
+    }
+    applyInk(img);
+  }
+
+  function loadFlips() {
+    chrome.storage.sync.get({ flips: {} }, ({ flips: f }) => {
+      flips = new Set(f[host] || []);
+      if (applied) for (const img of document.images) checkImg(img);
+    });
+  }
+
   function mark(el) {
+    if (el.nodeType === 1 && el.tagName === "IMG") { checkImg(el); return; }
     if (el.nodeType !== 1 || el === document.body || el === document.documentElement) return;
     if (el.hasAttribute("data-fdm-bg")) return;
     const bi = getComputedStyle(el).backgroundImage;
@@ -192,11 +264,11 @@
     observer = new MutationObserver((muts) => {
       for (const m of muts) {
         if (m.type === "childList") m.addedNodes.forEach((n) => n.nodeType === 1 && queue(n, true));
-        else queue(m.target, false);
+        else { if (m.attributeName === "src" || m.attributeName === "srcset") verdicts.delete(m.target); queue(m.target, false); }
       }
     });
     observer.observe(document.documentElement, {
-      childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style"],
+      childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style", "src", "srcset"],
     });
     if (document.body) queue(document.body, true);
   }
@@ -209,7 +281,8 @@
 
   // ---- Wiring ----
   update();
-  chrome.storage.onChanged.addListener(update);
+  loadFlips();
+  chrome.storage.onChanged.addListener((ch) => { if (ch.flips) loadFlips(); update(); });
   systemDark.addEventListener("change", update);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) update(); });
   document.addEventListener("DOMContentLoaded", () => { detect(); if (applied) queue(document.body, true); });

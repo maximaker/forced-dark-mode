@@ -68,6 +68,11 @@ chrome.runtime.onInstalled.addListener(() => {
     title: "Dark mode on this site (on/off)",
     contexts: ["page", "frame", "selection", "link", "image"],
   });
+  chrome.contextMenus.create({
+    id: "fdm-flip-image",
+    title: "Flip this image's colours",
+    contexts: ["image"],
+  });
   syncScripts();
 });
 chrome.runtime.onStartup.addListener(syncScripts);
@@ -81,7 +86,21 @@ chrome.commands.onCommand.addListener(async (command) => {
 });
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === "fdm-toggle") toggleTab(tab);
+  if (info.menuItemId === "fdm-flip-image") flipImage(tab, info.srcUrl);
 });
+
+// Remember a per-site override for one image: the page script swaps its auto choice.
+async function flipImage(tab, src) {
+  const host = hostOf(tab);
+  if (!host || !src) return;
+  const { flips = {} } = await chrome.storage.sync.get("flips");
+  const list = flips[host] || [];
+  const i = list.indexOf(src);
+  if (i >= 0) list.splice(i, 1); else list.push(src);
+  if (list.length > 40) list.shift(); // keep sync storage small
+  if (list.length) flips[host] = list; else delete flips[host];
+  await chrome.storage.sync.set({ flips });
+}
 
 // Popup asks us to start the script on a tab after a grant.
 chrome.runtime.onMessage.addListener((msg, sender) => {
